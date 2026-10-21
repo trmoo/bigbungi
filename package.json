@@ -1,0 +1,24 @@
+{
+  "name": "bigbungi",
+  "version": "1.0.0",
+  "description": "작업형3 통계 실습실 — 빅데이터분석기사 실기 작업형3(가설검정·분산분석·카이제곱·회귀·로지스틱 회귀)을 브라우저의 진짜 파이썬으로 연습하는 앱",
+  "private": true,
+  "license": "UNLICENSED",
+  "author": "티쳐무",
+  "type": "module",
+  "scripts": {
+    "start": "vite",
+    "dev": "vite",
+    "build": "node tools/check-syntax.mjs && vite build && node tools/check-dist.mjs",
+    "preview": "vite preview",
+    "test": "node test/run.mjs",
+    "check:syntax": "node tools/check-syntax.mjs",
+    "data": "node tools/py.mjs tools/make_data.py",
+    "golden": "node tools/golden.mjs"
+  },
+  "devDependencies": {
+    "pyodide": "^314.0.7",
+    "vite": "^8.2.2",
+    "vite-plugin-singlefile": "^2.3.3"
+  }
+}

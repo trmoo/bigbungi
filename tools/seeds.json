@@ -1,0 +1,22 @@
+{
+ "juice": 301,
+ "delivery": 302,
+ "sleep": 303,
+ "study": 306,
+ "wait": 307,
+ "usage": 306,
+ "tomato": 432,
+ "noise": 410,
+ "farm": 420,
+ "drink": 501,
+ "lunch": 503,
+ "coupon": 507,
+ "cafe": 603,
+ "member": 710,
+ "battery": 802,
+ "pressure": 802,
+ "academy": 806,
+ "club": 804,
+ "bike": 805,
+ "insure": 806
+}

@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.venv/
+*.log
+.claude/
+
+# 다른 분의 강의 자료(노트북·PDF 등)는 범위를 가늠하는 데에만 쓰고 저장소에 넣지 않는다
+*.ipynb
+*.pdf
+*.pptx
+*.hwp
+*.docx
+참고자료/
