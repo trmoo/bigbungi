@@ -90,7 +90,7 @@ function buildProblem(P, ref, store, updateScore) {
   const area = h('textarea', { class: 'free-code exam-code', spellcheck: 'false', rows: 14, 'aria-label': `${P.title} 풀이 코드` });
   area.value = st.code || starter;
   const out = h('div', { class: 'output' });
-  const fit = () => { area.style.height = 'auto'; area.style.height = `${Math.max(area.scrollHeight, 260)}px`; };
+  const fit = () => { area.style.height = 'auto'; area.style.height = `${Math.max(area.scrollHeight, 182)}px`; };
   area.addEventListener('input', () => { st.code = area.value; saveStore(); fit(); });
   area.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey || e.shiftKey)) { e.preventDefault(); run(); }

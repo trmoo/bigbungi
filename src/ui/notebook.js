@@ -405,7 +405,7 @@ export class Notebook {
     const area = h('textarea', { class: 'free-code', spellcheck: 'false', rows: 3, placeholder: '여기에 파이썬 코드를 쳐 보세요 (Ctrl+Enter 로 실행)' });
     area.value = store.free[key] ?? '';
     const out = h('div', { class: 'output' });
-    const fit = () => { area.style.height = 'auto'; area.style.height = `${Math.max(area.scrollHeight, 90)}px`; };
+    const fit = () => { area.style.height = 'auto'; area.style.height = `${Math.max(area.scrollHeight, 63)}px`; };
     const btn = h('button', { class: 'btn run', onClick: () => run() }, '▶ 실행');
     const run = async () => {
       if (!area.value.trim()) { toast('코드를 먼저 쳐 보세요.'); return; }
