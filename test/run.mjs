@@ -11,6 +11,7 @@ import { LESSONS, TABS, runnable, graded, answerCode, fillAnswers, splitTemplate
 import { PROBLEMS, CHEAT } from '../src/lessons/t7-exam.js';
 import { Q, R } from '../src/lessons/guide-tree.js';
 import { gradeAnswer } from '../src/ui/grade-answer.js';
+import { FLOWS, checkFlow } from '../src/ui/panels/flow-layout.js';
 import * as S from '../src/lib/stats.js';
 import { makeEngine, outText } from '../tools/engine-node.mjs';
 
@@ -51,6 +52,15 @@ for (const [k, node] of Object.entries(Q)) for (const [, next] of node.options) 
 for (const k of [...Object.keys(Q), ...Object.keys(R)]) ok(seen.has(k), `길잡이 ${k} 에 닿는 길이 없음`);
 for (const k of Object.keys(R)) ok(!Q[k], `길잡이 열쇠 ${k} 가 질문과 결과에 모두 있음`);
 for (const r of Object.values(R)) ok(LESSONS.some((l) => `${l.tab}/${l.id}` === r.link), `길잡이 결과 ${r.name} 의 링크 ${r.link} 가 없는 레슨`);
+
+// 검정 고르기 순서도 — 상자끼리 · 화살표 글자와 상자가 겹치지 않는가(2026-11-08 사후검정 상자가 크루스칼을 덮고 「정규 ○」 가 숨었다)
+const flowKinds = new Set();
+for (const L of LESSONS) for (const c of L.cells ?? []) if (c.panel === 'flow') { ok(FLOWS[c.which], `${L.id}: 없는 순서도 ${c.which}`); flowKinds.add(c.which); }
+for (const k of Object.keys(FLOWS)) {
+  ok(flowKinds.has(k), `순서도 ${k} 를 쓰는 레슨이 없음`);
+  const bad = checkFlow(k);
+  ok(bad.length === 0, `순서도 겹침:\n  ${bad.join('\n  ')}`);
+}
 
 // ── ② 답 채점기 ──
 const num3 = { fmt: 'num', dec: 3 };

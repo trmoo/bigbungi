@@ -17,7 +17,8 @@ for (const f of files) {
   try { execFileSync(process.execPath, ['--check', f], { stdio: 'pipe' }); } catch (e) { bad.push(`${f}: 문법 오류\n${e.stderr}`); }
   const code = s.replace(/\/\/.*$/gm, '');
   if (/\b(alert|confirm|prompt)\(/.test(code)) bad.push(`${f}: 브라우저 기본 대화상자를 씁니다 — lib/ui.js 의 modal( ) 을 쓰세요`);
-  if (/[\/](lessons|lib[\/]stats|ui[\/]grade-answer)/.test(f) && /\bdocument\./.test(code)) bad.push(`${f}: 레슨·계산 파일에서 document 를 씁니다 — node 시험이 죽습니다`);
+  // 경로 구분자는 윈도우(\)·리눅스(/) 둘 다 — 예전 [\/] 는 윈도우에서 한 번도 걸리지 않았다
+  if (/[\\/](lessons|lib[\\/]stats|ui[\\/]grade-answer|ui[\\/]panels[\\/]flow-layout)/.test(f) && /\bdocument\./.test(code)) bad.push(`${f}: 레슨·계산 파일에서 document 를 씁니다 — node 시험이 죽습니다`);
 }
 if (bad.length) { console.error(bad.join('\n')); process.exit(1); }
 console.log(`✅ 소스 ${files.length}개 — 문법·저작권 머리 주석·기본 대화상자·레슨 파일 DOM 점검 통과`);

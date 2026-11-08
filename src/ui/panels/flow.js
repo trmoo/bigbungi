@@ -2,58 +2,9 @@
 // 검정 고르기 순서도 — 상자를 누르면 그 단계에서 무엇을 보는지, 귀무가설, 쓸 코드가 나온다.
 import { h, svg, rich, fill } from '../../lib/ui.js';
 import { highlight } from '../output.js';
+import { FLOWS, BH, layoutFlow } from './flow-layout.js';
 
-// 상자: [x, y, 너비, 제목, 코드, 갈래(start·check·test·np)] · 화살표: [출발, 도착, 글자]
-const FLOWS = {
-  one: {
-    title: '단일표본 — 어떤 검정을 쓸까?',
-    nodes: {
-      s: [20, 70, 150, '모집단 1개', '데이터 한 묶음', 'start'],
-      n: [220, 70, 190, '정규성 검정', 'shapiro(data)', 'check'],
-      t: [470, 20, 270, '단일표본 t검정', 'ttest_1samp(data, 기준값)', 'test'],
-      w: [470, 130, 270, '윌콕슨 부호 순위 검정', 'wilcoxon(data - 기준값)', 'np'],
-    },
-    edges: [['s', 'n', ''], ['n', 't', '정규 ○'], ['n', 'w', '정규 ✗']],
-    height: 200,
-  },
-  paired: {
-    title: '대응표본 — 어떤 검정을 쓸까?',
-    nodes: {
-      s: [20, 70, 150, '같은 대상 2번', '전·후, 짝', 'start'],
-      n: [220, 70, 190, '차이의 정규성', 'shapiro(후 - 전)', 'check'],
-      t: [470, 20, 270, '대응표본 t검정', 'ttest_rel(후, 전)', 'test'],
-      w: [470, 130, 270, '윌콕슨 부호 순위 검정', 'wilcoxon(후, 전)', 'np'],
-    },
-    edges: [['s', 'n', ''], ['n', 't', '정규 ○'], ['n', 'w', '정규 ✗']],
-    height: 200,
-  },
-  ind: {
-    title: '독립표본 — 어떤 검정을 쓸까?',
-    nodes: {
-      s: [10, 80, 130, '서로 다른 두 그룹', 'a, b', 'start'],
-      n: [170, 80, 170, '두 그룹 정규성', 'shapiro(a), shapiro(b)', 'check'],
-      l: [370, 20, 150, '등분산 검정', 'levene(a, b)', 'check'],
-      t: [560, 0, 190, '독립표본 t검정', 'ttest_ind(a, b)', 'test'],
-      we: [560, 85, 190, '웰치 t검정', 'ttest_ind(a, b,\nequal_var=False)', 'test'],
-      m: [370, 165, 220, '맨-휘트니 U 검정', 'mannwhitneyu(a, b)', 'np'],
-    },
-    edges: [['s', 'n', ''], ['n', 'l', '정규 ○'], ['n', 'm', '정규 ✗'], ['l', 't', '등분산 ○'], ['l', 'we', '등분산 ✗']],
-    height: 240,
-  },
-  anova: {
-    title: '세 그룹 이상 — 어떤 검정을 쓸까?',
-    nodes: {
-      s: [10, 80, 130, '세 그룹 이상', 'g1, g2, g3, …', 'start'],
-      n: [170, 80, 170, '그룹마다 정규성', 'shapiro(g1), …', 'check'],
-      l: [370, 20, 150, '등분산 검정', 'levene(g1, g2, …)', 'check'],
-      t: [560, 20, 190, '일원 분산분석', 'f_oneway(g1, g2, …)', 'test'],
-      k: [370, 165, 220, '크루스칼-월리스 검정', 'kruskal(g1, g2, …)', 'np'],
-      p: [560, 120, 190, '사후검정', 'pairwise_tukeyhsd(…)', 'post'],
-    },
-    edges: [['s', 'n', ''], ['n', 'l', '정규 ○'], ['n', 'k', '정규 ✗'], ['l', 't', '등분산 ○'], ['t', 'p', '기각되면']],
-    height: 240,
-  },
-};
+// 상자·화살표 좌표는 flow-layout.js 에 있다(npm test 가 겹침을 잰다).
 
 const INFO = {
   shapiro: { what: '데이터가 정규분포(종 모양)를 따르는지 본다.', h0: '정규분포를 따른다', then: 'p > 0.05 → 정규성 ○ (모수 검정으로) · p ≤ 0.05 → 정규성 ✗ (비모수 검정으로)' },
@@ -71,23 +22,17 @@ const INFO = {
 const COLORS = { start: 'var(--line)', check: '#0ea5e9', test: 'var(--brand)', np: '#f59e0b', post: '#a855f7' };
 
 export function flowPanel(cell) {
-  const F = FLOWS[cell.which];
+  const F = layoutFlow(cell.which);
   const info = h('div', { class: 'flow-info' }, h('p', {}, '👆 상자를 눌러 보세요. 무엇을 확인하는지와 쓸 코드가 나옵니다.'));
-  const W = 760, BH = 62;
-  const box = (k) => F.nodes[k];
-  const mid = (k, side) => { const [x, y, w] = box(k); return side === 'r' ? [x + w, y + BH / 2] : side === 'l' ? [x, y + BH / 2] : [x + w / 2, y + BH]; };
-  const s = svg('svg', { viewBox: `0 0 ${W} ${F.height}`, class: 'flow', role: 'img', 'aria-label': F.title },
+  // 넓을 때는 그림 1단위 = 1px(글자가 본문과 비슷), 좁은 화면에서는 0.75배까지만 줄이고 옆으로 밀어 본다
+  const s = svg('svg', { viewBox: `0 0 ${F.W} ${F.H}`, class: 'flow', style: `max-width:${F.W}px; min-width:${Math.round(F.W * 0.75)}px`, role: 'img', 'aria-label': F.title },
     svg('defs', {}, svg('marker', { id: `arr-${cell.which}`, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' }, svg('path', { d: 'M0,0 L10,5 L0,10 z', fill: 'var(--muted)' }))));
-  for (const [a, b, label] of F.edges) {
-    const [x1, y1] = mid(a, 'r');
-    const [x2, y2] = mid(b, 'l');
-    const mx = x1 + 14;
-    const d = Math.abs(y1 - y2) < 2 ? `M${x1},${y1} L${x2 - 2},${y2}` : `M${x1},${y1} L${mx},${y1} L${mx},${y2} L${x2 - 2},${y2}`;
+  for (const e of F.edges) {
+    const d = e.pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x},${y}`).join(' ');
     s.appendChild(svg('path', { d, fill: 'none', stroke: 'var(--muted)', 'stroke-width': 1.6, 'marker-end': `url(#arr-${cell.which})` }));
-    if (label) s.appendChild(svg('text', { x: mx + 6, y: y2 - 6, class: 'flow-lab' }, label));
   }
   const nodes = [];
-  for (const [k, [x, y, w, title, code, kind]] of Object.entries(F.nodes)) {
+  for (const { x, y, w, title, code, kind } of F.boxes) {
     const g = svg('g', { class: `flow-node ${kind}`, tabindex: 0, role: 'button', 'aria-label': `${title} ${code}` },
       svg('rect', { x, y, width: w, height: BH, rx: 10, fill: 'var(--card)', stroke: COLORS[kind], 'stroke-width': kind === 'start' ? 1.5 : 2.5 }),
       svg('text', { x: x + w / 2, y: y + 25, class: 'flow-title' }, title),
@@ -109,6 +54,8 @@ export function flowPanel(cell) {
     nodes.push(g);
     s.appendChild(g);
   }
+  // 화살표 글자는 상자 다음에 그려 맨 위에 둔다 — 자리가 어긋나도 상자 뒤에 숨지 않게
+  for (const e of F.edges) if (e.label) s.appendChild(svg('text', { x: e.lx, y: e.ly, class: 'flow-lab', 'text-anchor': e.anchor }, e.label));
   return h('div', {}, h('div', { class: 'flow-wrap' }, s), info);
 }
 
